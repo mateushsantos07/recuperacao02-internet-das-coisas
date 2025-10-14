@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MQTT Web Subscriber</title>
+<style>
+  body { font-family: ui-sans-serif, system-ui, Arial, sans-serif; margin: 16px; }
+  h1 { margin-bottom: 8px; }
+  fieldset { border: 1px solid #ccc; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+  legend { padding: 0 6px; font-weight: 600; }
+  label { display:block; margin:6px 0 4px; font-size: 14px; }
+  input, select, button { padding: 8px; font-size: 14px; }
+  .row { display:flex; gap:8px; flex-wrap: wrap; }
+  .row > * { flex: 1 1 160px; }
+  #log { background:#0f172a; color:#e5e7eb; padding:12px; border-radius:8px; min-height:260px; white-space:pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .ok { color:#34d399; } .err { color:#f87171; } .muted { color:#9ca3af; }
+</style>
+</head>
+<body>
+  <h1>MQTT Web Subscriber</h1>
+
+  <fieldset>
+    <legend>Conexão</legend>
+    <div class="row">
+      <div><label>Protocol</label><select id="proto"><option>ws</option><option>wss</option></select></div>
+      <div><label>Host</label><input id="host" value="localhost"/></div>
+      <div><label>Port</label><input id="port" value="9001"/></div>
+      <div><label>Client ID</label><input id="clientId" placeholder="ex: aluno-sub-01"/></div>
+      <div><label>Username</label><input id="username" value="aluno"/></div>
+      <div><label>Password</label><input id="password" type="password" value="aluno123"/></div>
+      <div style="align-self:end;"><button id="btnConnect">Conectar</button> <button id="btnDisconnect">Desconectar</button></div>
+    </div>
+    <small class="muted">Use <b>ws://host:9001</b> (ou <b>wss</b> com TLS). Client ID deve ser único.</small>
+  </fieldset>
+
+  <fieldset>
+    <legend>Subscribe</legend>
+    <div class="row">
+      <div><label>Topic</label><input id="subTopic" placeholder="ex: escola/lab01/#"/></div>
+      <div><label>QoS</label><select id="subQos"><option>0</option><option>1</option><option>2</option></select></div>
+      <div style="align-self:end;"><button id="btnSub">Assinar</button> <button id="btnUnsub">Cancelar</button></div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Console</legend>
+    <div id="log"></div>
+  </fieldset>
+
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script>
+    let client = null;
+    const logEl = document.getElementById('log');
+    function log(msg, cls='') {
+      const time = new Date().toLocaleTimeString();
+      logEl.innerHTML += (cls ? `<span class="${cls}">` : '') + `[${time}] ` + msg + (cls ? `</span>` : '') + '\n';
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+    const proto = document.getElementById('proto');
+    const host = document.getElementById('host');
+    const port = document.getElementById('port');
+    const clientId = document.getElementById('clientId');
+    const username = document.getElementById('username');
+    const password = document.getElementById('password');
+    const subTopic = document.getElementById('subTopic');
+    const subQos = document.getElementById('subQos');
+
+    document.getElementById('btnConnect').onclick = () => {
+      if (client && client.connected) return log('Já conectado.', 'muted');
+      const url = `${proto.value}://${host.value}:${port.value}`;
+      const options = {
+        username: username.value || undefined,
+        password: password.value || undefined,
+        clientId: clientId.value || ('sub-' + Math.random().toString(16).slice(2)),
+        clean: true,
+        keepalive: 60,
+        protocolVersion: 4
+      };
+      log(`Conectando em ${url} como ${options.clientId} ...`, 'muted');
+      client = mqtt.connect(url, options);
+      client.on('connect', () => log('Conectado ✅', 'ok'));
+      client.on('reconnect', () => log('Reconectando...', 'muted'));
+      client.on('close', () => log('Conexão fechada.', 'muted'));
+      client.on('error', (e) => log('Erro: ' + e.message, 'err'));
+      client.on('message', (topic, payload) => {
+        let text = payload.toString();
+        try { const obj = JSON.parse(text); text = JSON.stringify(obj); } catch {}
+        log(`← ${topic} ${text}`);
+      });
+    };
+
+    document.getElementById('btnDisconnect').onclick = () => {
+      if (client) { client.end(true); log('Desconectando...', 'muted'); }
+    };
+
+    document.getElementById('btnSub').onclick = () => {
+      if (!client || !client.connected) return log('Conecte primeiro.', 'err');
+      const t = subTopic.value.trim(); const q = Number(subQos.value);
+      if (!t) return log('Topic é obrigatório para subscribe.', 'err');
+      client.subscribe(t, {qos: q}, (err, granted) => {
+        if (err) log('SUB erro: ' + err.message, 'err');
+        else log('SUB ok: ' + JSON.stringify(granted), 'ok');
+      });
+    };
+
+    document.getElementById('btnUnsub').onclick = () => {
+      if (!client || !client.connected) return log('Conecte primeiro.', 'err');
+      const t = subTopic.value.trim(); if (!t) return log('Topic é obrigatório para unsubscribe.', 'err');
+      client.unsubscribe(t, (err) => err ? log('UNSUB erro: '+err.message, 'err') : log('UNSUB ok: '+t, 'ok'));
+    };
+  </script>
+</body>
+</html>
