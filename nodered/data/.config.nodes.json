@@ -426,5 +426,64 @@
                 "file": "/usr/src/node-red/node_modules/@node-red/nodes/core/storage/23-watch.js"
             }
         }
+    },
+    "node-red-contrib-uuid": {
+        "name": "node-red-contrib-uuid",
+        "version": "0.0.4",
+        "local": true,
+        "user": true,
+        "nodes": {
+            "UUID": {
+                "name": "UUID",
+                "types": [
+                    "uuid"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-uuid",
+                "file": "/data/node_modules/node-red-contrib-uuid/uuid/uuid.js"
+            }
+        }
+    },
+    "node-red-contrib-mongodb4": {
+        "name": "node-red-contrib-mongodb4",
+        "version": "3.1.1",
+        "local": true,
+        "user": true,
+        "nodes": {
+            "mongodb4": {
+                "name": "mongodb4",
+                "types": [
+                    "mongodb4-client",
+                    "mongodb4"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-mongodb4",
+                "file": "/data/node_modules/node-red-contrib-mongodb4/src/mongodb4.js"
+            }
+        }
+    },
+    "node-red-contrib-postgresql": {
+        "name": "node-red-contrib-postgresql",
+        "version": "0.15.4",
+        "local": true,
+        "user": true,
+        "nodes": {
+            "postgresql": {
+                "name": "postgresql",
+                "types": [
+                    "postgreSQLConfig",
+                    "postgresql"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-postgresql",
+                "file": "/data/node_modules/node-red-contrib-postgresql/postgresql.js"
+            }
+        }
     }
 }
